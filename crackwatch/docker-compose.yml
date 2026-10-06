@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: crackwatch
+      POSTGRES_PASSWORD: crackwatch
+      POSTGRES_DB: crackwatch
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crackwatch -d crackwatch"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ADDR: ":8080"
+      DATABASE_URL: "postgres://crackwatch:crackwatch@postgres:5432/crackwatch?sslmode=disable"
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:
